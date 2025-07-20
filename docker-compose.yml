@@ -120,7 +120,8 @@ services:
       db:
         condition: service_healthy
         restart: true
-    command: ["./scripts/migrate.sh"]
+    # command: ["./scripts/migrate.sh"]
+    command: ["echo", "Skipping migrate container – DB already exists"]
     environment:
       <<: *backend-env
 
