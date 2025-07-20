@@ -110,7 +110,7 @@ services:
     command: --port ${REDIS_PORT:-6379}
     volumes:
       - lago_redis_data:/data
-    ports: []
+    # ports:
       # - ${REDIS_PORT:-6379}:${REDIS_PORT:-6379}
 
   migrate:
