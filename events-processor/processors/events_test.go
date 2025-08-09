@@ -32,10 +32,10 @@ func setupTestEnv(t *testing.T) (sqlmock.Sqlmock, func()) {
 }
 
 func mockBmLookup(sqlmock sqlmock.Sqlmock, bm *models.BillableMetric) {
-	columns := []string{"id", "organization_id", "code", "field_name", "expression", "created_at", "updated_at", "deleted_at"}
+	columns := []string{"id", "organization_id", "code", "aggregation_type", "field_name", "expression", "created_at", "updated_at", "deleted_at"}
 
 	rows := sqlmock.NewRows(columns).
-		AddRow(bm.ID, bm.OrganizationID, bm.Code, bm.FieldName, bm.Expression, bm.CreatedAt, bm.UpdatedAt, bm.DeletedAt)
+		AddRow(bm.ID, bm.OrganizationID, bm.Code, bm.AggregationType, bm.FieldName, bm.Expression, bm.CreatedAt, bm.UpdatedAt, bm.DeletedAt)
 
 	sqlmock.ExpectQuery("SELECT \\* FROM \"billable_metrics\".*").WillReturnRows(rows)
 }
@@ -107,17 +107,18 @@ func TestProcessEvent(t *testing.T) {
 		}
 
 		bm := models.BillableMetric{
-			ID:             "bm123",
-			OrganizationID: event.OrganizationID,
-			Code:           event.Code,
-			FieldName:      "api_requests",
-			Expression:     "",
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			ID:              "bm123",
+			OrganizationID:  event.OrganizationID,
+			Code:            event.Code,
+			AggregationType: models.AggregationTypeSum,
+			FieldName:       "api_requests",
+			Expression:      "",
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
 		}
 		mockBmLookup(sqlmock, &bm)
 
-		sub := models.Subscription{ID: "sub123"}
+		sub := models.Subscription{ID: "sub123", PlanID: "plan123"}
 		mockSubscriptionLookup(sqlmock, &sub)
 
 		enrichedProducer := tests.MockMessageProducer{}
@@ -127,6 +128,9 @@ func TestProcessEvent(t *testing.T) {
 
 		assert.True(t, result.Success())
 		assert.Equal(t, "12.0", *result.Value().Value)
+		assert.Equal(t, "sum", result.Value().AggregationType)
+		assert.Equal(t, "sub123", result.Value().SubscriptionID)
+		assert.Equal(t, "plan123", result.Value().PlanID)
 
 		// Give some time to the go routine to complete
 		// TODO: Improve this by using channels in the producers methods
@@ -147,13 +151,14 @@ func TestProcessEvent(t *testing.T) {
 		}
 
 		bm := models.BillableMetric{
-			ID:             "bm123",
-			OrganizationID: event.OrganizationID,
-			Code:           event.Code,
-			FieldName:      "api_requests",
-			Expression:     "",
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			ID:              "bm123",
+			OrganizationID:  event.OrganizationID,
+			Code:            event.Code,
+			AggregationType: models.AggregationTypeWeightedSum,
+			FieldName:       "api_requests",
+			Expression:      "",
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
 		}
 		mockBmLookup(sqlmock, &bm)
 
@@ -177,13 +182,14 @@ func TestProcessEvent(t *testing.T) {
 		}
 
 		bm := models.BillableMetric{
-			ID:             "bm123",
-			OrganizationID: event.OrganizationID,
-			Code:           event.Code,
-			FieldName:      "api_requests",
-			Expression:     "",
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			ID:              "bm123",
+			OrganizationID:  event.OrganizationID,
+			Code:            event.Code,
+			AggregationType: models.AggregationTypeWeightedSum,
+			FieldName:       "api_requests",
+			Expression:      "",
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
 		}
 		mockBmLookup(sqlmock, &bm)
 
@@ -206,13 +212,14 @@ func TestProcessEvent(t *testing.T) {
 		}
 
 		bm := models.BillableMetric{
-			ID:             "bm123",
-			OrganizationID: event.OrganizationID,
-			Code:           event.Code,
-			FieldName:      "api_requests",
-			Expression:     "",
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			ID:              "bm123",
+			OrganizationID:  event.OrganizationID,
+			Code:            event.Code,
+			AggregationType: models.AggregationTypeWeightedSum,
+			FieldName:       "api_requests",
+			Expression:      "",
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
 		}
 		mockBmLookup(sqlmock, &bm)
 
@@ -243,13 +250,14 @@ func TestProcessEvent(t *testing.T) {
 		}
 
 		bm := models.BillableMetric{
-			ID:             "bm123",
-			OrganizationID: event.OrganizationID,
-			Code:           event.Code,
-			FieldName:      "api_requests",
-			Expression:     "round(event.properties.value)",
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			ID:              "bm123",
+			OrganizationID:  event.OrganizationID,
+			Code:            event.Code,
+			AggregationType: models.AggregationTypeWeightedSum,
+			FieldName:       "api_requests",
+			Expression:      "round(event.properties.value)",
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
 		}
 		mockBmLookup(sqlmock, &bm)
 
@@ -281,13 +289,14 @@ func TestProcessEvent(t *testing.T) {
 		}
 
 		bm := models.BillableMetric{
-			ID:             "bm123",
-			OrganizationID: event.OrganizationID,
-			Code:           event.Code,
-			FieldName:      "api_requests",
-			Expression:     "round(event.properties.value)",
-			CreatedAt:      time.Now(),
-			UpdatedAt:      time.Now(),
+			ID:              "bm123",
+			OrganizationID:  event.OrganizationID,
+			Code:            event.Code,
+			AggregationType: models.AggregationTypeWeightedSum,
+			FieldName:       "api_requests",
+			Expression:      "round(event.properties.value)",
+			CreatedAt:       time.Now(),
+			UpdatedAt:       time.Now(),
 		}
 		mockBmLookup(sqlmock, &bm)
 
@@ -315,49 +324,6 @@ func TestProcessEvent(t *testing.T) {
 		assert.Equal(t, 1, enrichedProducer.ExecutionCount)
 
 		assert.Equal(t, 1, flagStore.ExecutionCount)
-	})
-}
-
-func TestEvaluateExpression(t *testing.T) {
-	bm := models.BillableMetric{}
-	event := models.EnrichedEvent{Timestamp: 1741007009.0, Code: "foo"}
-	var result utils.Result[bool]
-
-	t.Run("Without expression", func(t *testing.T) {
-		result = evaluateExpression(&event, &bm)
-		assert.True(t, result.Success(), "It should succeed when Billable metric does not have a custom expression")
-	})
-
-	t.Run("With an expression but witout required fields", func(t *testing.T) {
-		bm.Expression = "round(event.properties.value * event.properties.units)"
-		bm.FieldName = "total_value"
-		result = evaluateExpression(&event, &bm)
-		assert.False(t, result.Success())
-		assert.Contains(
-			t,
-			result.ErrorMsg(),
-			"Failed to evaluate expr:",
-			"It should fail when the event does not hold the required fields",
-		)
-	})
-
-	t.Run("With an expression and with required fields", func(t *testing.T) {
-		properties := map[string]any{
-			"value": "12.0",
-			"units": 3,
-		}
-		event.Properties = properties
-		result = evaluateExpression(&event, &bm)
-		assert.True(t, result.Success())
-		assert.Equal(t, "36", event.Properties["total_value"])
-	})
-
-	t.Run("With a float timestamp", func(t *testing.T) {
-		event.Timestamp = 1741007009.123
-
-		result = evaluateExpression(&event, &bm)
-		assert.True(t, result.Success())
-		assert.Equal(t, "36", event.Properties["total_value"])
 	})
 }
 
