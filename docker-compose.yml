@@ -163,6 +163,7 @@ services:
     command: ["./scripts/migrate.sh"]
     volumes:
       - lago_rsa_data:/app/config/keys
+
     environment:
       <<: *backend-env
 
